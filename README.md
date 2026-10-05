@@ -60,6 +60,6 @@ store as `accepted` or `spam`. Bots always get the same `201` answer.
 
 ## Turn off the server 
 
-```
+```bash
 docker compose down
 ```
