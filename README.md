@@ -10,7 +10,16 @@ docker compose up --build
 - API docs: http://localhost:8000/docs
 - Dashboard: http://localhost:8000/dashboard (paste `ADMIN_API_KEY` from `.env`)
 
-## Try it
+## Set the $ADMIN_API_KEY for the terminal
+```
+cd /home/green/Documents/Flyrank/widgetplatform
+export ADMIN_API_KEY=$(grep '^ADMIN_API_KEY=' .env | cut -d= -f2)
+echo $ADMIN_API_KEY
+```
+> replace the path with your Project directory  
+
+## Try it 
+
 ```bash
 # 1. create a widget (admin)
 curl -X POST localhost:8000/admin/widgets \
@@ -48,3 +57,9 @@ store as `accepted` or `spam`. Bots always get the same `201` answer.
 - Rate limiter is in-memory (use Redis with several workers).
 - `elapsed_ms` comes from the browser, so it can be faked; sign a timestamp token to harden it.
 - Tables are created on startup; add Alembic migrations when the schema starts changing.
+
+## Turn off the server 
+
+```
+docker compose down
+```
