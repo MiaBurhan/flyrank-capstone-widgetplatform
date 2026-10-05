@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead Dashboard</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:24px;max-width:1100px}
+  input,select,button{padding:8px;font:inherit}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .cards{display:flex;gap:12px;margin:16px 0}
+  .card{border:1px solid #ddd;border-radius:8px;padding:12px 18px}
+  .card b{display:block;font-size:24px}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{border-bottom:1px solid #eee;padding:6px 8px;text-align:left;vertical-align:top}
+  .spam{background:#fff4f4}
+  pre{margin:0;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>Lead Dashboard</h1>
+<div class="row">
+  <input id="key" type="password" placeholder="Admin API key" size="40">
+  <button id="load">Load widgets</button>
+  <select id="widget"></select>
+  <select id="status"><option value="">all leads</option><option>accepted</option><option>spam</option></select>
+  <button id="refresh">Refresh</button>
+</div>
+<div id="err" style="color:#b00"></div>
+<div class="cards" id="cards"></div>
+<table>
+  <thead><tr><th>When</th><th>Name</th><th>Email</th><th>Message</th><th>Status</th><th>Score / reasons</th><th>Enrichment</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<script>
+const $ = (id) => document.getElementById(id);
+async function api(path) {
+  const r = await fetch(path, { headers: { "X-Admin-Key": $("key").value } });
+  if (!r.ok) throw new Error(path + " -> " + r.status);
+  return r.json();
+}
+function cell(tr, text) { const td = document.createElement("td"); td.textContent = text ?? ""; tr.appendChild(td); }
+
+$("load").onclick = async () => {
+  $("err").textContent = "";
+  try {
+    const widgets = await api("/admin/widgets");
+    $("widget").replaceChildren(...widgets.map(w => { const o = document.createElement("option"); o.value = w.id; o.textContent = w.name + " (" + w.id + ")"; return o; }));
+    if (widgets.length) refresh();
+  } catch (e) { $("err").textContent = e.message; }
+};
+
+async function refresh() {
+  const id = $("widget").value; if (!id) return;
+  $("err").textContent = "";
+  try {
+    const [s, leads] = await Promise.all([
+      api(`/admin/widgets/${id}/stats`),
+      api(`/admin/widgets/${id}/leads?limit=100` + ($("status").value ? "&status=" + $("status").value : ""))
+    ]);
+    $("cards").replaceChildren(...[["Total", s.total], ["Accepted", s.accepted], ["Spam", s.spam], ["Spam rate", Math.round(s.spam_rate * 100) + "%"]].map(([k, v]) => {
+      const d = document.createElement("div"); d.className = "card"; d.append(k); const b = document.createElement("b"); b.textContent = v; d.prepend(b); return d;
+    }));
+    $("rows").replaceChildren(...leads.map(l => {
+      const tr = document.createElement("tr"); if (l.status === "spam") tr.className = "spam";
+      cell(tr, new Date(l.created_at).toLocaleString()); cell(tr, l.name); cell(tr, l.email); cell(tr, l.message); cell(tr, l.status);
+      cell(tr, l.spam_score + (l.spam_reasons.length ? " · " + l.spam_reasons.join(", ") : ""));
+      cell(tr, [l.enrichment.email_domain, l.enrichment.device, l.enrichment.country].filter(Boolean).join(" · "));
+      return tr;
+    }));
+  } catch (e) { $("err").textContent = e.message; }
+}
+$("refresh").onclick = refresh;
+$("widget").onchange = refresh;
+$("status").onchange = refresh;
+</script>
+</body>
+</html>
