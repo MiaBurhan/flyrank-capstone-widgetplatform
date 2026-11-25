@@ -1,7 +1,11 @@
 # Embeddable Widget & Lead-Capture Platform
 
-Create a widget, paste **one line** on any website, and collect leads that are validated,
+Creates a widget, paste **one line** on any website, and collect leads that are validated,
 spam-filtered, enriched and visible on a dashboard.
+
+A platform that lets customers create embeddable widgets, signup forms, contact forms,
+call-to-action popovers and install them on any website with a single <script> tag.
+When a visitor interacts with the widget, the submission travels back to your backend, where it is validated, protected against abuse, enriched with location data, stored, and shown to the widget's owner in a dashboard.
 
 ## Run it
 ```bash
